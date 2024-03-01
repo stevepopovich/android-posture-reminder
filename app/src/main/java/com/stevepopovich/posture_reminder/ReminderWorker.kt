@@ -22,24 +22,10 @@ const val REMINDER_WORKER_TAG = "REMINDER_WORKER_TAG"
 class ReminderWorker(appContext: Context, workerParams: WorkerParameters): Worker(appContext, workerParams) {
     @SuppressLint("MissingPermission")
     override fun doWork(): Result {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val name = "Posture reminder push notifications"
-            val descriptionText = "Posture Reminder push notifications"
-            val importance = NotificationManager.IMPORTANCE_HIGH
-            val channel = NotificationChannel(CHANNEL_ID, name, importance).apply {
-                description = descriptionText
-            }
-            // Register the channel with the system.
-            val notificationManager: NotificationManager =
-                applicationContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-            notificationManager.createNotificationChannel(channel)
-        }
-
         //Build push notification
         val builder = NotificationCompat.Builder(applicationContext, CHANNEL_ID)
             .setSmallIcon(androidx.core.R.drawable.ic_call_answer_low)
             .setContentText("Time to check your posture")
-            .setPriority(NotificationCompat.PRIORITY_MAX)
 
         NotificationManagerCompat.from(applicationContext).notify(NOTIFICATION_ID, builder.build())
 
@@ -52,7 +38,7 @@ class ReminderWorker(appContext: Context, workerParams: WorkerParameters): Worke
         val nextReminderWorkRequest: WorkRequest =
             OneTimeWorkRequestBuilder<ReminderWorker>()
                 .addTag(REMINDER_WORKER_TAG)
-                .setInitialDelay(5, TimeUnit.MINUTES)
+                .setInitialDelay(1, TimeUnit.MINUTES)
                 .build()
 
         val workManager = WorkManager.getInstance(applicationContext)
