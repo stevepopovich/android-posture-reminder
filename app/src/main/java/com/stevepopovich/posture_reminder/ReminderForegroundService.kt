@@ -57,6 +57,7 @@ class ReminderForegroundService : Service() {
 
     override fun onDestroy() {
         super.onDestroy()
+        WorkManager.getInstance(this).cancelAllWork()
         stopForeground(true)
     }
 }
