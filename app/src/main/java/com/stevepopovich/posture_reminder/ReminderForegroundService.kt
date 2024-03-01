@@ -3,14 +3,11 @@ package com.stevepopovich.posture_reminder
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.Service
-import android.app.Service.START_NOT_STICKY
 import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
-import androidx.core.app.ServiceCompat.startForeground
-import androidx.core.app.ServiceCompat.stopForeground
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkRequest
