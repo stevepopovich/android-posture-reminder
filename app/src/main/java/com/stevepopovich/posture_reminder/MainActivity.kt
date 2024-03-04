@@ -18,8 +18,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
@@ -30,6 +32,8 @@ import androidx.core.app.ActivityCompat
 import androidx.datastore.preferences.core.edit
 import androidx.work.WorkManager
 import com.stevepopovich.posture_reminder.ui.theme.PostureReminderTheme
+import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
@@ -53,10 +57,17 @@ class MainActivity : ComponentActivity() {
         val reminderServiceIntent = Intent(this, ReminderForegroundService::class.java)
 
         setContent {
-            var minuteValue by remember { mutableIntStateOf(1) }
-            var secondValue by remember { mutableIntStateOf(0) }
+            var minuteValue: Int? by remember { mutableStateOf(null) }
+            var secondValue: Int? by remember { mutableStateOf(null) }
 
             val coroutineScope = rememberCoroutineScope()
+
+            LaunchedEffect(Unit) {
+                val storedInterval = applicationContext.reminderDataStore.data.firstOrNull()
+                minuteValue = storedInterval?.get(MINUTES_KEY)
+                secondValue = storedInterval?.get(SECONDS_KEY)
+            }
+
             PostureReminderTheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
@@ -70,7 +81,9 @@ class MainActivity : ComponentActivity() {
                         Button(onClick = {
                             this@MainActivity.startService(reminderServiceIntent)
 
-                            val totalSeconds = (minuteValue * 60) + secondValue
+                            val minute = minuteValue ?: 0
+                            val second = secondValue ?: 0
+                            val totalSeconds = (minute * 60) + second
                             val formatted = "${(totalSeconds / 60).toString().padStart(2, '0')}MM : ${(totalSeconds % 60).toString().padStart(2, '0')}SS"
                             val toast = Toast.makeText(this@MainActivity, "Started with $formatted interval", Toast.LENGTH_SHORT)
                             toast.show()
@@ -87,28 +100,40 @@ class MainActivity : ComponentActivity() {
                             val textFieldWidth = 80.dp
                             TextField(
                                 modifier = Modifier.width(textFieldWidth),
-                                value = minuteValue.toString(),
+                                value = if (minuteValue == null) "" else minuteValue.toString(),
                                 onValueChange = {
                                     if (it.toIntOrNull() != null) {
                                         minuteValue = it.toInt()
                                         coroutineScope.launch {
                                             saveMinutes(it.toInt())
                                         }
+                                    } else if (it.isEmpty()) {
+                                        minuteValue = null
+                                        coroutineScope.launch {
+                                            saveMinutes(0)
+                                        }
                                     }
                                 },
+                                placeholder = { Text("MM") }
                             )
                             Text(text = ":")
                             TextField(
                                 modifier = Modifier.width(textFieldWidth),
-                                value = secondValue.toString(),
+                                value = if (secondValue == null) "" else secondValue.toString(),
                                 onValueChange = {
                                     if (it.toIntOrNull() != null) {
                                         secondValue = it.toInt()
                                         coroutineScope.launch {
                                             saveSeconds(it.toInt())
                                         }
+                                    } else if (it.isEmpty()) {
+                                        secondValue = null
+                                        coroutineScope.launch {
+                                            saveSeconds(0)
+                                        }
                                     }
                                 },
+                                placeholder = { Text("SS") }
                             )
                         }
                     }
