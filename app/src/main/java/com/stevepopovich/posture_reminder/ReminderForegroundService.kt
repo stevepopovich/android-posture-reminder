@@ -19,8 +19,8 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
-val CHANNEL_ID = "posture_reminder_channel"
-val NOTIFICATION_ID = 999
+const val CHANNEL_ID = "posture_reminder_channel"
+const val NOTIFICATION_ID = 1911
 
 class ReminderForegroundService : Service() {
 
