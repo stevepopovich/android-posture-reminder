@@ -19,6 +19,9 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
+val CHANNEL_ID = "posture_reminder_channel"
+val NOTIFICATION_ID = 999
+
 class ReminderForegroundService : Service() {
 
     private val job = SupervisorJob()
@@ -46,7 +49,7 @@ class ReminderForegroundService : Service() {
         val notification = NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle("Posture Reminder")
             .setContentText("Your reminder timer is running in the background")
-            .setSmallIcon(R.drawable.ic_launcher_foreground)
+            .setSmallIcon(R.mipmap.ic_launcher_foreground)
             .setOngoing(true)
             .build()
 
@@ -76,7 +79,7 @@ class ReminderForegroundService : Service() {
         val totalSeconds = (minutes * 60) + seconds
 
         val builder = NotificationCompat.Builder(applicationContext, CHANNEL_ID)
-            .setSmallIcon(androidx.core.R.drawable.ic_call_answer_low)
+            .setSmallIcon(R.mipmap.ic_launcher_foreground)
             .setContentText("Time to check your posture")
 
         NotificationManagerCompat.from(applicationContext).notify(NOTIFICATION_ID, builder.build())
