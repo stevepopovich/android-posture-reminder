@@ -58,7 +58,7 @@ class ReminderForegroundService : Service() {
         val notification = NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle("Posture Reminder")
             .setContentText("Your reminder timer is running in the background")
-            .setSmallIcon(R.mipmap.ic_launcher_foreground)
+            .setSmallIcon(R.mipmap.ic_launcher_round)
             .setOngoing(true)
             .setContentIntent(notifyPendingIntent)
             .build()
@@ -92,7 +92,7 @@ class ReminderForegroundService : Service() {
         val totalSeconds = (minutes * 60) + seconds
 
         val builder = NotificationCompat.Builder(applicationContext, CHANNEL_ID)
-            .setSmallIcon(R.mipmap.ic_launcher_foreground)
+            .setSmallIcon(R.mipmap.ic_launcher_round)
             .setContentText("Time to check your posture")
             .setContentIntent(notifyPendingIntent)
 
