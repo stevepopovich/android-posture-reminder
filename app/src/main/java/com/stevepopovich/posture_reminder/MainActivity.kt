@@ -90,12 +90,14 @@ class MainActivity : ComponentActivity() {
                         }) {
                             Text(getString(R.string.start_reminder_service))
                         }
+
                         Button(onClick = {
                             this@MainActivity.stopService(reminderServiceIntent)
                             WorkManager.getInstance(applicationContext).cancelAllWork()
                         }) {
                             Text(getString(R.string.stop_reminder_service))
                         }
+
                         Row {
                             val textFieldWidth = 80.dp
                             TextField(
