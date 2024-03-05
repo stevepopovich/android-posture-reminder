@@ -22,6 +22,7 @@ import kotlinx.coroutines.launch
 const val CHANNEL_ID = "posture_reminder_channel"
 const val NOTIFICATION_ID = 1911
 const val FOREGROUND_NOTIFICATION_ID = 999
+const val DESTROYED_NOTIFICATION_ID = 1000
 
 class ReminderForegroundService : Service() {
 
@@ -77,8 +78,17 @@ class ReminderForegroundService : Service() {
         return START_STICKY
     }
 
+    @SuppressLint("MissingPermission")
     override fun onDestroy() {
         super.onDestroy()
+
+        val builder = NotificationCompat.Builder(applicationContext, CHANNEL_ID)
+            .setSmallIcon(R.mipmap.ic_launcher_round)
+            .setContentText("Your reminder timer has been destroyed")
+            .setContentIntent(notifyPendingIntent)
+
+        NotificationManagerCompat.from(applicationContext).notify(DESTROYED_NOTIFICATION_ID, builder.build())
+
         job.cancel()
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
             stopForeground(STOP_FOREGROUND_REMOVE)
