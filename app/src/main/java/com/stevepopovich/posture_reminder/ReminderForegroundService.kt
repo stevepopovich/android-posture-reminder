@@ -3,6 +3,7 @@ package com.stevepopovich.posture_reminder
 import android.annotation.SuppressLint
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.app.PendingIntent
 import android.app.Service
 import android.content.Context
 import android.content.Intent
@@ -10,7 +11,6 @@ import android.os.Build
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
-import androidx.datastore.preferences.core.Preferences
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -21,11 +21,20 @@ import kotlinx.coroutines.launch
 
 const val CHANNEL_ID = "posture_reminder_channel"
 const val NOTIFICATION_ID = 1911
+const val FOREGROUND_NOTIFICATION_ID = 999
 
 class ReminderForegroundService : Service() {
 
     private val job = SupervisorJob()
     private val scope = CoroutineScope(Dispatchers.IO + job)
+
+    private val notifyIntent
+        get() = Intent(this, MainActivity::class.java)
+    private val notifyPendingIntent: PendingIntent
+        get() = PendingIntent.getActivity(
+            this, 0, notifyIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
 
     override fun onBind(intent: Intent): IBinder? {
         return null
@@ -51,14 +60,17 @@ class ReminderForegroundService : Service() {
             .setContentText("Your reminder timer is running in the background")
             .setSmallIcon(R.mipmap.ic_launcher_foreground)
             .setOngoing(true)
+            .setContentIntent(notifyPendingIntent)
             .build()
 
-        startForeground(999, notification)
+        startForeground(FOREGROUND_NOTIFICATION_ID, notification)
 
         scope.launch {
             applicationContext.reminderDataStore.data
                 .map { preferences ->
-                    doReminders(preferences)
+                    val minutes = preferences[MINUTES_KEY] ?: 0
+                    val seconds = preferences[SECONDS_KEY] ?: 0
+                    doReminders(minutes, seconds)
                 }.collect()
         }
 
@@ -68,19 +80,21 @@ class ReminderForegroundService : Service() {
     override fun onDestroy() {
         super.onDestroy()
         job.cancel()
-        stopForeground(true)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            stopForeground(STOP_FOREGROUND_REMOVE)
+        } else {
+            stopForeground(true)
+        }
     }
 
     @SuppressLint("MissingPermission")
-    private suspend fun doReminders(preferences: Preferences) {
-        val minutes = preferences[MINUTES_KEY] ?: 0
-        val seconds = preferences[SECONDS_KEY] ?: 0
-
+    private suspend fun doReminders(minutes: Int, seconds: Int) {
         val totalSeconds = (minutes * 60) + seconds
 
         val builder = NotificationCompat.Builder(applicationContext, CHANNEL_ID)
             .setSmallIcon(R.mipmap.ic_launcher_foreground)
             .setContentText("Time to check your posture")
+            .setContentIntent(notifyPendingIntent)
 
         NotificationManagerCompat.from(applicationContext).notify(NOTIFICATION_ID, builder.build())
 
@@ -91,6 +105,6 @@ class ReminderForegroundService : Service() {
 
         delay((totalSeconds.toLong() - deleteReminderDelay) * 1000)
 
-        doReminders(preferences)
+        doReminders(minutes, seconds)
     }
 }
