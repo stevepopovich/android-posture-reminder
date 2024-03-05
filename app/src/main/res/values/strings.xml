@@ -1,3 +1,14 @@
 <resources>
     <string name="app_name">Repeat Reminder</string>
+    <string name="notification_channel_name">Posture Reminder</string>
+    <string name="started_with_interval">"Started with %1$s interval"</string>
+    <string name="start_reminder_service">Start Reminder Service</string>
+    <string name="stop_reminder_service">Stop Reminder Service</string>
+    <string name="your_reminder_timer_has_been_destroyed">Your reminder timer has been destroyed</string>
+    <string name="time_to_check_your_posture">Time to check your posture</string>
+    <string name="posture_reminder">Posture Reminder</string>
+    <string name="your_reminder_timer_is_running_in_the_background">Your reminder timer is running in the background</string>
+    <string name="posture_reminder_push_notifications_channel_description">Posture Reminder push notifications</string>
+    <string name="posture_reminder_push_notifications_name">Posture reminder push notifications</string>
+
 </resources>

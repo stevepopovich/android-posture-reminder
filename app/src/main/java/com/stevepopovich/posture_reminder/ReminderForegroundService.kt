@@ -44,8 +44,8 @@ class ReminderForegroundService : Service() {
     @SuppressLint("MissingPermission")
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val name = "Posture reminder push notifications"
-            val descriptionText = "Posture Reminder push notifications"
+            val name = getString(R.string.posture_reminder_push_notifications_name)
+            val descriptionText = getString(R.string.posture_reminder_push_notifications_channel_description)
             val importance = NotificationManager.IMPORTANCE_DEFAULT
             val channel = NotificationChannel(CHANNEL_ID, name, importance).apply {
                 description = descriptionText
@@ -57,8 +57,8 @@ class ReminderForegroundService : Service() {
         }
 
         val notification = NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle("Posture Reminder")
-            .setContentText("Your reminder timer is running in the background")
+            .setContentTitle(getString(R.string.posture_reminder))
+            .setContentText(getString(R.string.your_reminder_timer_is_running_in_the_background))
             .setSmallIcon(R.mipmap.ic_launcher_round)
             .setOngoing(true)
             .setContentIntent(notifyPendingIntent)
@@ -84,7 +84,7 @@ class ReminderForegroundService : Service() {
 
         val builder = NotificationCompat.Builder(applicationContext, CHANNEL_ID)
             .setSmallIcon(R.mipmap.ic_launcher_round)
-            .setContentText("Your reminder timer has been destroyed")
+            .setContentText(getString(R.string.your_reminder_timer_has_been_destroyed))
             .setContentIntent(notifyPendingIntent)
 
         NotificationManagerCompat.from(applicationContext).notify(DESTROYED_NOTIFICATION_ID, builder.build())
@@ -103,7 +103,7 @@ class ReminderForegroundService : Service() {
 
         val builder = NotificationCompat.Builder(applicationContext, CHANNEL_ID)
             .setSmallIcon(R.mipmap.ic_launcher_round)
-            .setContentText("Time to check your posture")
+            .setContentText(getString(R.string.time_to_check_your_posture))
             .setContentIntent(notifyPendingIntent)
 
         NotificationManagerCompat.from(applicationContext).notify(NOTIFICATION_ID, builder.build())

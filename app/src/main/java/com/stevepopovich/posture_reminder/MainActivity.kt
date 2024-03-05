@@ -85,16 +85,16 @@ class MainActivity : ComponentActivity() {
                             val second = secondValue ?: 0
                             val totalSeconds = (minute * 60) + second
                             val formatted = "${(totalSeconds / 60).toString().padStart(2, '0')}MM : ${(totalSeconds % 60).toString().padStart(2, '0')}SS"
-                            val toast = Toast.makeText(this@MainActivity, "Started with $formatted interval", Toast.LENGTH_SHORT)
+                            val toast = Toast.makeText(this@MainActivity, getString(R.string.started_with_interval, formatted), Toast.LENGTH_SHORT)
                             toast.show()
                         }) {
-                            Text("Start Reminder Service")
+                            Text(getString(R.string.start_reminder_service))
                         }
                         Button(onClick = {
                             this@MainActivity.stopService(reminderServiceIntent)
                             WorkManager.getInstance(applicationContext).cancelAllWork()
                         }) {
-                            Text("Stop Reminder Service")
+                            Text(getString(R.string.stop_reminder_service))
                         }
                         Row {
                             val textFieldWidth = 80.dp
