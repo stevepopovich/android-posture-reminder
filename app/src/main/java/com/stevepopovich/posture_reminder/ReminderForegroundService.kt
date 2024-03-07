@@ -11,13 +11,18 @@ import android.os.Build
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import androidx.datastore.preferences.core.edit
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.time.LocalDateTime
+import java.util.Calendar
 
 const val CHANNEL_ID = "posture_reminder_channel"
 const val NOTIFICATION_ID = 1911
@@ -28,6 +33,8 @@ class ReminderForegroundService : Service() {
 
     private val job = SupervisorJob()
     private val scope = CoroutineScope(Dispatchers.IO + job)
+
+    private val formatter = SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
 
     private val notifyIntent
         get() = Intent(this, MainActivity::class.java)
@@ -101,9 +108,21 @@ class ReminderForegroundService : Service() {
     private suspend fun doReminders(minutes: Int, seconds: Int) {
         val totalSeconds = (minutes * 60) + seconds
 
+        val preferences = applicationContext.reminderDataStore.data.firstOrNull()
+        val lastNotifTime = preferences?.get(LAST_NOTIF_TIME) ?: formatter.format(Calendar.getInstance().time)
+        val timeParsed = formatter.parse(lastNotifTime)
+
+        val now = Calendar.getInstance().time
+
+        val difference = (now.time - timeParsed.time) / 1000
+
+        scope.launch { // Don't wanna block the thread
+            applicationContext.reminderDataStore.edit { it[LAST_NOTIF_TIME] = formatter.format(now) }
+        }
+
         val builder = NotificationCompat.Builder(applicationContext, CHANNEL_ID)
             .setSmallIcon(R.mipmap.ic_launcher_round)
-            .setContentText(getString(R.string.time_to_check_your_posture))
+            .setContentText(getString(R.string.time_to_check_your_posture) + " $difference")
             .setContentIntent(notifyPendingIntent)
 
         NotificationManagerCompat.from(applicationContext).notify(NOTIFICATION_ID, builder.build())
@@ -111,7 +130,7 @@ class ReminderForegroundService : Service() {
         val deleteReminderDelay = 3L
         delay(deleteReminderDelay * 1000)
 
-        NotificationManagerCompat.from(applicationContext).cancel(NOTIFICATION_ID)
+//        NotificationManagerCompat.from(applicationContext).cancel(NOTIFICATION_ID) Need this long term
 
         delay((totalSeconds.toLong() - deleteReminderDelay) * 1000)
 
