@@ -8,7 +8,10 @@ import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.os.Build
+import android.os.CountDownTimer
+import android.os.Handler
 import android.os.IBinder
+import android.os.Looper
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.datastore.preferences.core.edit
@@ -17,6 +20,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
@@ -31,13 +35,13 @@ const val DESTROYED_NOTIFICATION_ID = 1000
 
 class ReminderForegroundService : Service() {
 
-    private val job = SupervisorJob()
-    private val scope = CoroutineScope(Dispatchers.IO + job)
+    private val scope = CoroutineScope(Dispatchers.Main)
 
-    private val formatter = SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
+    private var timer: CountDownTimer? = null
 
     private val notifyIntent
         get() = Intent(this, MainActivity::class.java)
+
     private val notifyPendingIntent: PendingIntent
         get() = PendingIntent.getActivity(
             this, 0, notifyIntent,
@@ -53,7 +57,7 @@ class ReminderForegroundService : Service() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val name = getString(R.string.posture_reminder_push_notifications_name)
             val descriptionText = getString(R.string.posture_reminder_push_notifications_channel_description)
-            val importance = NotificationManager.IMPORTANCE_DEFAULT
+            val importance = NotificationManager.IMPORTANCE_HIGH
             val channel = NotificationChannel(CHANNEL_ID, name, importance).apply {
                 description = descriptionText
             }
@@ -75,11 +79,12 @@ class ReminderForegroundService : Service() {
 
         scope.launch {
             applicationContext.reminderDataStore.data
-                .map { preferences ->
+                .first()
+                .let { preferences ->
                     val minutes = preferences[MINUTES_KEY] ?: 0
-                    val seconds = preferences[SECONDS_KEY] ?: 0
-                    doReminders(minutes, seconds)
-                }.collect()
+                    val seconds = preferences[SECONDS_KEY] ?: 30
+                    startTimer(minutes, seconds)
+                }
         }
 
         return START_STICKY
@@ -94,9 +99,11 @@ class ReminderForegroundService : Service() {
             .setContentText(getString(R.string.your_reminder_timer_has_been_destroyed))
             .setContentIntent(notifyPendingIntent)
 
-        NotificationManagerCompat.from(applicationContext).notify(DESTROYED_NOTIFICATION_ID, builder.build())
+        NotificationManagerCompat
+            .from(applicationContext)
+            .notify(DESTROYED_NOTIFICATION_ID, builder.build())
 
-        job.cancel()
+        timer?.cancel()
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
             stopForeground(STOP_FOREGROUND_REMOVE)
         } else {
@@ -104,36 +111,26 @@ class ReminderForegroundService : Service() {
         }
     }
 
-    @SuppressLint("MissingPermission")
-    private suspend fun doReminders(minutes: Int, seconds: Int) {
-        val totalSeconds = (minutes * 60) + seconds
+    private fun startTimer(minutes: Int, seconds: Int) {
+        val totalSecondsInMillis = ((minutes * 60) + seconds) * 1000L
 
-        val preferences = applicationContext.reminderDataStore.data.firstOrNull()
-        val lastNotifTime = preferences?.get(LAST_NOTIF_TIME) ?: formatter.format(Calendar.getInstance().time)
-        val timeParsed = formatter.parse(lastNotifTime)
+        timer?.cancel()
 
-        val now = Calendar.getInstance().time
+        timer = object : CountDownTimer(totalSecondsInMillis, totalSecondsInMillis) {
+            override fun onTick(millisUntilFinished: Long) {}
 
-        val difference = (now.time - timeParsed.time) / 1000
+            @SuppressLint("MissingPermission")
+            override fun onFinish() {
+                val builder = NotificationCompat.Builder(applicationContext, CHANNEL_ID)
+                    .setSmallIcon(R.mipmap.ic_launcher_round)
+                    .setPriority(NotificationCompat.PRIORITY_MAX)
+                    .setContentText(getString(R.string.time_to_check_your_posture))
+                    .setContentIntent(notifyPendingIntent)
 
-        scope.launch { // Don't wanna block the thread
-            applicationContext.reminderDataStore.edit { it[LAST_NOTIF_TIME] = formatter.format(now) }
-        }
+                NotificationManagerCompat.from(applicationContext).notify(NOTIFICATION_ID, builder.build())
 
-        val builder = NotificationCompat.Builder(applicationContext, CHANNEL_ID)
-            .setSmallIcon(R.mipmap.ic_launcher_round)
-            .setContentText(getString(R.string.time_to_check_your_posture) + " $difference")
-            .setContentIntent(notifyPendingIntent)
-
-        NotificationManagerCompat.from(applicationContext).notify(NOTIFICATION_ID, builder.build())
-
-        val deleteReminderDelay = 3L
-        delay(deleteReminderDelay * 1000)
-
-//        NotificationManagerCompat.from(applicationContext).cancel(NOTIFICATION_ID) Need this long term
-
-        delay((totalSeconds.toLong() - deleteReminderDelay) * 1000)
-
-        doReminders(minutes, seconds)
+                startTimer(minutes, seconds)
+            }
+        }.start()
     }
 }

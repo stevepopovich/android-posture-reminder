@@ -82,7 +82,8 @@ class MainActivity : ComponentActivity() {
                             val minute = minuteValue ?: 0
                             val second = secondValue ?: 0
                             val totalSeconds = (minute * 60) + second
-                            val formatted = "${(totalSeconds / 60).toString().padStart(2, '0')}MM : ${(totalSeconds % 60).toString().padStart(2, '0')}SS"
+                            val formatted = "${(totalSeconds / 60).toString().padStart(2, '0')}MM" +
+                                    " : ${(totalSeconds % 60).toString().padStart(2, '0')}SS"
                             val toast = Toast.makeText(this@MainActivity, getString(R.string.started_with_interval, formatted), Toast.LENGTH_SHORT)
                             toast.show()
                         }) {
@@ -121,16 +122,13 @@ class MainActivity : ComponentActivity() {
                                 modifier = Modifier.width(textFieldWidth),
                                 value = if (secondValue == null) "" else secondValue.toString(),
                                 onValueChange = {
-                                    if (it.toIntOrNull() != null) {
+                                    if (it.toIntOrNull() != null && it.toInt() > 0) {
                                         secondValue = it.toInt()
                                         coroutineScope.launch {
                                             saveSeconds(it.toInt())
                                         }
                                     } else if (it.isEmpty()) {
                                         secondValue = null
-                                        coroutineScope.launch {
-                                            saveSeconds(0)
-                                        }
                                     }
                                 },
                                 placeholder = { Text("SS") }

@@ -12,4 +12,3 @@ val Context.reminderDataStore: DataStore<Preferences> by preferencesDataStore(na
 
 val MINUTES_KEY = intPreferencesKey("minutes_key")
 val SECONDS_KEY = intPreferencesKey("seconds_key")
-val LAST_NOTIF_TIME = stringPreferencesKey("last_notif_time")
