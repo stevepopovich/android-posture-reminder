@@ -122,7 +122,7 @@ class MainActivity : ComponentActivity() {
                                 modifier = Modifier.width(textFieldWidth),
                                 value = if (secondValue == null) "" else secondValue.toString(),
                                 onValueChange = {
-                                    if (it.toIntOrNull() != null && it.toInt() > 0) {
+                                    if (it.toIntOrNull() != null) {
                                         secondValue = it.toInt()
                                         coroutineScope.launch {
                                             saveSeconds(it.toInt())
