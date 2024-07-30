@@ -112,7 +112,8 @@ class ReminderForegroundService : Service() {
     }
 
     private fun startTimer(minutes: Int, seconds: Int) {
-        val totalSecondsInMillis = ((minutes * 60) + seconds) * 1000L
+        val totalSecondsInMillis = (((minutes * 60) + seconds) * 1000L)
+            .coerceAtLeast(5000L) // If make the interval less than 5 seconds,
 
         timer?.cancel()
 
